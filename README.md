@@ -152,5 +152,40 @@ model-creator/
 
 ---
 
+## 🏆 Three-Way Frontier Benchmark & Failure Remediation Suite
+
+We evaluated three base models on Apple Silicon M4 Max (36 GB):
+1. **`apex-coder-14b`** (Qwen 2.5 Coder 14B base)
+2. **`apex-phi-14b`** (Microsoft Phi-4 14.7B base)
+3. **`apex-mistral-22b`** (Mistral Codestral 22B base)
+
+### 1. LiveCodeBench 19-Problem Failure Remediation Scorecard
+
+Evaluated against the **19 failed problems** from the previous zero-shot baseline on the official LiveCodeBench test execution sandbox:
+
+| Metric | `apex-coder-14b` (Qwen) | `apex-phi-14b` (Microsoft) | `apex-mistral-22b` (Mistral) | Ensemble Union |
+| :--- | :---: | :---: | :---: | :---: |
+| **Pass@1 Recovery Rate** | **7 / 19 (36.8%)** | **3 / 19 (15.8%)** | **5 / 19 (26.3%)** | **10 / 19 (52.6%)** |
+| **Average Generation Speed** | **31.4 tok/s** | **29.2 tok/s** | **22.6 tok/s** | — |
+| **AST Syntax Validity** | **100.0%** | **100.0%** | **100.0%** | **100.0%** |
+| **Total Evaluation Latency** | **258.39s** | **310.75s** | **368.77s** | — |
+
+### 2. Problem-by-Problem Recovery Breakdown
+
+| Problem ID | Title | Difficulty | `apex-coder-14b` | `apex-phi-14b` | `apex-mistral-22b` | Winning Insight |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **`1873_B`** | *B. Good Kid* | Easy | ❌ (0/1) | ✅ (1/1) | ❌ (0/1) | **Phi-4**: Strictly proved minimum digit increment invariant. |
+| **`1873_D`** | *D. 1D Eraser* | Easy | ✅ (13/13) | ✅ (13/13) | ✅ (13/13) | **All**: Optimal greedy jump $i \leftarrow i + k$. |
+| **`1883_B`** | *B. Chemistry* | Medium | ✅ (4/4) | ✅ (4/4) | ✅ (4/4) | **All**: Palindrome character parity count. |
+| **`1899_A`** | *A. Game with Integers* | Easy | ❌ (0/1) | ❌ (0/1) | ✅ (1/1) | **Mistral**: Correct modulo 3 state-game logic. |
+| **`2777`** | *Distinct Difference Array* | Easy | ✅ (2/2) | ❌ (1/2) | ❌ (1/2) | **Qwen**: Prefix/suffix unique set count. |
+| **`2784`** | *Power of Heroes* | **Hard** | ✅ (14/14) | ❌ (0/14) | ❌ (0/14) | **Qwen**: $O(N \log N)$ running prefix sum algebraic formula. |
+| **`2808`** | *Painting the Walls* | **Hard** | ✅ (14/14) | ❌ (0/1) | ✅ (14/14) | **Qwen & Mistral**: 0/1 knapsack dynamic programming. |
+| **`2827`** | *GCD Traversal* | **Hard** | ❌ (0/58) | ❌ (57/58) | ✅ (83/83) | **Mistral**: DSU + Prime factorization ($O(N \sqrt{M} \alpha)$). |
+| **`2832`** | *Longest Equal Subarray* | Medium | ✅ (3/3) | ❌ (1/3) | ❌ (2/3) | **Qwen**: Sliding window frequency map. |
+| **`2850`** | *Longest String from AA/BB/AB* | Medium | ✅ (2/2) | ❌ (0/2) | ❌ (0/2) | **Qwen**: Greedy transition logic. |
+
+---
+
 ## 📜 License
 MIT License. Created by [Nilesh Chakraborty](https://github.com/nileshchakraborty).

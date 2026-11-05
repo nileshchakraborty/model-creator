@@ -46,5 +46,7 @@ deployments/
 
 # Test & Benchmark Output
 tests/*.json
+!tests/lcb_failed_19_three_way_benchmark.json
+!tests/three_way_model_benchmark_report.json
 results/
 logs/
