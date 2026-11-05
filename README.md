@@ -53,6 +53,7 @@ $$\text{Max Generation Tokens/sec} \approx \frac{\text{Memory Bandwidth (GB/s)}}
 | System Architecture | Memory Bus | Bandwidth | Optimal Model Size | Quantization | Headroom Left |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Apple Silicon (36–64 GB)** | Unified LPDDR5 | 300–400 GB/s | **14B to 32B** | **Q5_K_M** (9.8–22 GB) | 20+ GB |
+| **Apple Silicon (96–128 GB)**| Unified LPDDR5 | 400–800 GB/s | **70B to 123B**| **Q4_K_M** (42–70 GB)  | 45+ GB |
 | **Apple Silicon (16–24 GB)** | Unified LPDDR5 | 150–200 GB/s | **7B** | **Q5_K_M** (5.2 GB) | 10+ GB |
 | **Discrete GPU (8–16 GB VRAM)**| Dedicated GDDR6 | 288–448 GB/s | **7B to 14B** | **Q5_K_M** / **Q4_K_M** | 2–4 GB |
 | **Discrete GPU (4 GB GDDR6)** | Dedicated GDDR6 | 192 GB/s | **7B** | **IQ3_M** (3.57 GB) | 0.4 GB |
@@ -96,6 +97,28 @@ This repository comes pre-packaged with first-class agent customizations:
 
 ---
 
+## 🧠 Recursive Epistemic Multi-Agent Swarm (RecursiveMAS + HippoRAG)
+
+Model-Creator includes an enterprise-grade recursive multi-agent system designed to match or surpass Claude 3.5/3.7 Sonnet using non-georestricted open-weight models:
+
+- **Smart Cognitive Router (`scripts/recursive_task_scheduler.py`)**:
+  - Automatically scores task complexity $\mathcal{C}(\mathcal{T})$.
+  - Low entropy ($\mathcal{C} < 0.55$): Routes to **System 1 Fast-Path** (<500ms, 0 subagents).
+  - High entropy ($\mathcal{C} \ge 0.55$): Escalates to **System 2 RecursiveMAS** (hierarchical DAG micro-tasks).
+- **CAR Task Engine (`scripts/car_analyzer.py`)**:
+  - Classifies defects into **Type A (Surface defect)** $\to$ single-shot deterministic AST repair.
+  - Classifies defects into **Type B (Epistemic root-cause)** $\to$ issues defect ticket and auto-escalates to RecursiveMAS.
+- **Zero-Assumption & Strict Scope Invariant**:
+  - Subagents strictly adhere to contract boundaries and never guess unstated assumptions.
+  - Emits `BLOCKED_MISSING_INFO` tickets to request resolution without hallucinating.
+- **Shared Epistemic Memory Bus (`scripts/epistemic_cache.py`)**:
+  - In-memory vector deduplication filter ($\ge 0.92$ cosine similarity) ensures no research is conducted twice.
+  - HippoRAG OpenIE triple knowledge graph with Personalized PageRank (PPR) associative contextual retrieval.
+- **M2 Max (96 GB) Scaling**:
+  - Complete configuration guide in [`.agents/skills/recursive-epistemic-optimizer/references/m2_max_96gb_scaling_guide.md`](file:///.agents/skills/recursive-epistemic-optimizer/references/m2_max_96gb_scaling_guide.md) for scaling to **Meta Llama 3.3 70B** and **Mistral Large 2 (123B)** with 80 GB wired memory tuning.
+
+---
+
 ## 📂 Repository Structure
 
 ```text
@@ -104,17 +127,22 @@ model-creator/
 │   ├── agents/
 │   │   └── universal-model-builder.md       # Autonomous agent specification
 │   └── skills/
-│       └── universal-model-builder/
+│       ├── universal-model-builder/         # Model building & quantization skill
+│       └── recursive-epistemic-optimizer/   # RecursiveMAS & HippoRAG optimization skill
 │           ├── SKILL.md                     # Skill instructions & runbook
-│           ├── examples/presets.ini         # Multi-hardware presets template
-│           └── references/hardware_matrix.md# Memory bandwidth & hardware reference
+│           └── references/
+│               └── m2_max_96gb_scaling_guide.md # M2 Max 96GB scaling blueprint
 ├── scripts/
 │   ├── hardware_model_profiler.py          # Dynamic hardware & memory profiler
 │   ├── create_custom_model.py               # 1-command custom model creator
 │   ├── ast_linter_tool.py                   # Karpathy Software 3.0 AST linter
 │   ├── diff_codegen_cluster.py              # DiffCodeGen behavioral clustering
 │   ├── clean_decoding_pipeline.py           # Unified decoding with tool self-repair
-│   └── test_livecodebench_eval.py           # Air-gapped benchmark harness
+│   ├── epistemic_cache.py                   # HippoRAG OpenIE graph & semantic deduplication
+│   ├── car_analyzer.py                      # CAR Task defect triage & zero-assumption scope
+│   ├── recursive_task_scheduler.py          # Cognitive Router & hardware backpressure governor
+│   ├── epistemic_gap_arbiter.py             # Round 2 gap resolution & code synthesizer
+│   └── test_livecodebench_eval.py           # LiveCodeBench evaluation with RecursiveMAS
 ├── BLUEPRINT.md                             # Deep architectural specification
 ├── REPLICATION_TRANSCRIPT.md                # Turnkey session replication transcript
 ├── pyproject.toml                           # Package metadata and CLI entrypoints
