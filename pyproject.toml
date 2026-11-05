@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "model-creator"
+version = "1.0.0"
+description = "Universal LLM Auto-Profiler, Hardware Sizing Advisor, and 1-Command Deployment Engine"
+readme = "README.md"
+authors = [{ name = "Nilesh Chakraborty" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "huggingface_hub>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+model-profiler = "scripts.hardware_model_profiler:main"
+model-creator = "scripts.create_custom_model:main"
