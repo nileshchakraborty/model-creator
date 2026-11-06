@@ -35,6 +35,9 @@ ENV/
 *.bin
 *.safetensors
 models/
+adapters/
+data/
+curriculum/
 deployments/
 
 # IDE & OS
