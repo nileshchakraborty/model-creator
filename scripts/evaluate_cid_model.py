@@ -49,33 +49,44 @@ def extract_code(text: str) -> str:
     return text.strip()
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate CID LoRA on LiveCodeBench 25 Problems")
-    parser.add_argument("--model-path", default="mlx-community/Qwen2.5-Coder-14B-Instruct-4bit")
-    parser.add_argument("--adapter-path", default=os.path.join(PROJECT_ROOT, "adapters/qwen_cid_v2_lora"))
-    parser.add_argument("--output-file", default=os.path.join(PROJECT_ROOT, "tests/lcb_benchmark_cid_v2_25p.json"))
-    parser.add_argument("--cache-file", default=os.path.join(PROJECT_ROOT, "tests/cached_cid_v2_generations.json"))
+    parser = argparse.ArgumentParser(description="Evaluate CID Model on LiveCodeBench")
+    parser.add_argument("--model-path", default=os.path.join(PROJECT_ROOT, "models/qwen2.5_coder_14b_cid_fused"))
+    parser.add_argument("--adapter-path", default="")
+    parser.add_argument("--count", type=int, default=50, help="Number of problems (default: 50)")
+    parser.add_argument("--offset", type=int, default=0, help="Offset for slice (default: 0)")
+    parser.add_argument("--subset", type=str, default="slice", choices=["failed", "slice"], help="Problem subset ('slice' or 'failed')")
+    parser.add_argument("--output-file", default="", help="Output benchmark JSON path")
+    parser.add_argument("--cache-file", default="", help="Cache JSON path")
     args = parser.parse_args()
 
+    default_output = os.path.join(PROJECT_ROOT, f"tests/lcb_benchmark_cid_{args.subset}_{args.count}p.json")
+    default_cache = os.path.join(PROJECT_ROOT, f"tests/cached_cid_{args.subset}_{args.count}p_generations.json")
+    output_file = args.output_file if args.output_file else default_output
+    cache_file = args.cache_file if args.cache_file else default_cache
+
     print("=" * 80)
-    print("🔬 STRICTLY BLIND EVALUATION: QWEN 2.5 CODER 14B (CID ADAPTER)")
+    print(f"🔬 STRICTLY BLIND EVALUATION: CID FUSED MODEL ({args.subset.upper()} {args.count} PROBLEMS)")
     print("=" * 80)
-    print(f"Base Model:   {args.model_path}")
-    print(f"Adapter Path: {args.adapter_path}")
-    print(f"Target Count: {len(TARGET_25_IDS)} failure set problems")
-    print(f"Output File:  {args.output_file}")
+    print(f"Model Path:   {args.model_path}")
+    print(f"Adapter Path: {args.adapter_path if args.adapter_path else 'None (Fused Standalone Model)'}")
+    print(f"Output File:  {output_file}")
+    print(f"Cache File:   {cache_file}")
     
     # 1. Load LiveCodeBench Dataset
     dataset = load_code_generation_dataset()
-    problem_map = {p.question_id: p for p in dataset}
-    eval_problems = [problem_map[pid] for pid in TARGET_25_IDS if pid in problem_map]
-    print(f"Loaded {len(eval_problems)} matching LiveCodeBench problems.")
+    if args.subset == "failed":
+        problem_map = {p.question_id: p for p in dataset}
+        eval_problems = [problem_map[pid] for pid in TARGET_25_IDS if pid in problem_map][:args.count]
+    else:
+        eval_problems = dataset[args.offset : args.offset + args.count]
+    print(f"Loaded {len(eval_problems)} evaluation problems from LiveCodeBench.\n")
 
     cached_generations = {}
-    if os.path.exists(args.cache_file):
+    if os.path.exists(cache_file):
         try:
-            with open(args.cache_file, "r") as f:
+            with open(cache_file, "r") as f:
                 cached_generations = json.load(f)
-            print(f"Loaded {len(cached_generations)} cached generations from {args.cache_file}")
+            print(f"Loaded {len(cached_generations)} cached generations from {cache_file}")
         except Exception:
             cached_generations = {}
 
@@ -149,7 +160,7 @@ def main():
                 "extracted_code": code,
                 "generation_time_sec": gen_time
             }
-            with open(args.cache_file, "w") as f:
+            with open(cache_file, "w") as f:
                 json.dump(results, f, indent=2)
 
         samples_for_metrics.append([results[pid]["extracted_code"]])
@@ -207,25 +218,39 @@ def main():
         })
 
     pass_at_1 = float(metrics.get("pass@1", 0.0))
+    diff_stats = {}
+    for p in detailed_problems:
+        d = p["difficulty"]
+        if d not in diff_stats:
+            diff_stats[d] = [0, 0]
+        diff_stats[d][1] += 1
+        if p["passed"]:
+            diff_stats[d][0] += 1
+
     print("=" * 80)
     print(f"🏆 FINAL VERIFIED CID SCORE: {passed_count}/{len(eval_problems)} ({pass_at_1 * 100:.1f}%)")
+    print("Difficulty Breakdown:")
+    for d, (p_cnt, t_cnt) in diff_stats.items():
+        pct = (p_cnt / t_cnt * 100) if t_cnt > 0 else 0.0
+        print(f"  • {d.upper():<8}: {p_cnt:>2}/{t_cnt:<2} ({pct:.1f}%)")
     print("=" * 80)
 
     benchmark_record = {
-        "benchmark": "LiveCodeBench (Strictly Blind CID LoRA)",
+        "benchmark": f"LiveCodeBench (CID Fused Model {args.subset.upper()} {len(eval_problems)}p)",
         "model": args.model_path,
-        "adapter": args.adapter_path,
+        "adapter": args.adapter_path if args.adapter_path else "None (Fused Standalone Model)",
         "problem_count": len(eval_problems),
         "overall_pass_at_1": pass_at_1,
         "passed_count": passed_count,
+        "difficulty_breakdown": diff_stats,
         "metrics": metrics,
         "problems": detailed_problems
     }
     
-    os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
-    with open(args.output_file, "w") as f:
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    with open(output_file, "w") as f:
         json.dump(benchmark_record, f, indent=2)
-    print(f"\nSaved verified CID benchmark record to {args.output_file}")
+    print(f"\nSaved verified CID benchmark record to {output_file}")
 
 if __name__ == "__main__":
     main()
