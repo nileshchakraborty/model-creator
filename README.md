@@ -49,7 +49,7 @@ This outputs:
 
 Model-Creator includes the complete, end-to-end implementation of **Compact Invariant Distillation (CID)**, synthesizing native mathematical induction, DeepSeek-R1 semantic variable binding (*arXiv:2501.12948*), and bounded cognitive reasoning (*arXiv:2604.10739* "When More Thinking Hurts").
 
-By restricting `<think> ... </think>` to **$\le 150$ tokens ($\le 2$ dense sentences)**, CID eliminates the "preamble trap" (where open-ended 1,000+ token thought chains cause context exhaustion and hallucinate non-existent theorems).
+By restricting `<think> ... </think>` to **under 150 tokens (at most 2 dense sentences)**, CID eliminates the "preamble trap" (where open-ended 1,000+ token thought chains cause context exhaustion and hallucinate non-existent theorems).
 
 ### Verified Benchmark Results (50 Consecutive LiveCodeBench Problems)
 
